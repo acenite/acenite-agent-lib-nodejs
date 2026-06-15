@@ -1,12 +1,19 @@
-export interface AceniteConfig {
-  apiKey: string;
+export { AceniteAgent } from "./agent";
+export { sendHeartbeat } from "./heartbeat";
+export type {
+  AceniteAgentConfig,
+  AceniteFramework,
+  AceniteInstrumentation,
+} from "./types";
+
+import { AceniteAgent } from "./agent";
+import type { AceniteAgentConfig } from "./types";
+
+export function start(config: AceniteAgentConfig): void {
+  AceniteAgent.start(config);
 }
 
-export function start(config: AceniteConfig): void {
-  console.log("Acenite agent starting...");
-  console.log("API Key:", config.apiKey);
-
-  setInterval(() => {
-    console.log("collecting metrics...");
-  }, 5000);
+export function stop(): Promise<void> {
+  return AceniteAgent.stop();
 }
+
