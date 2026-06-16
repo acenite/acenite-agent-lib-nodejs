@@ -4,6 +4,10 @@ vi.mock("../src/heartbeat", () => ({
   startHeartbeat: vi.fn(() => ({ unref: vi.fn() })),
 }));
 
+vi.mock("../src/hostMetrics", () => ({
+  startHostMetrics: vi.fn(() => ({ unref: vi.fn() })),
+}));
+
 vi.mock("../src/otel", () => ({
   setupOtel: vi.fn(),
   shutdownOtel: vi.fn().mockResolvedValue(undefined),
@@ -11,6 +15,7 @@ vi.mock("../src/otel", () => ({
 
 import { AceniteAgent, start, stop } from "../src";
 import { startHeartbeat } from "../src/heartbeat";
+import { startHostMetrics } from "../src/hostMetrics";
 import { setupOtel } from "../src/otel";
 
 describe("AceniteAgent", () => {
@@ -44,23 +49,36 @@ describe("AceniteAgent", () => {
     });
     expect(startHeartbeat).toHaveBeenCalledOnce();
     expect(startHeartbeat).toHaveBeenCalledWith("test-key", 60);
+    expect(startHostMetrics).toHaveBeenCalledOnce();
+    expect(startHostMetrics).toHaveBeenCalledWith({
+      apiKey: "test-key",
+      serviceName: "orders",
+      interval: 60,
+      instanceId: undefined,
+      hostname: undefined,
+    });
   });
 
-  it("honors disabled logging and heartbeat options", () => {
+  it("honors disabled logging, heartbeat, and host metrics options", () => {
     AceniteAgent.start({
       apiKey: "test-key",
       enableLogging: false,
       enableHeartbeat: false,
+      enableHostMetrics: false,
     });
 
     expect(setupOtel).not.toHaveBeenCalled();
     expect(startHeartbeat).not.toHaveBeenCalled();
+    expect(startHostMetrics).not.toHaveBeenCalled();
   });
 
-  it("uses the Python-compatible default service name and custom interval", () => {
+  it("uses the Python-compatible default service name and custom intervals", () => {
     AceniteAgent.start({
       apiKey: "test-key",
       heartbeatInterval: 15,
+      hostMetricsInterval: 30,
+      instanceId: "server-01",
+      hostname: "prod-api-1",
     });
 
     expect(setupOtel).toHaveBeenCalledWith({
@@ -71,6 +89,13 @@ describe("AceniteAgent", () => {
       serviceName: "unknown-service",
     });
     expect(startHeartbeat).toHaveBeenCalledWith("test-key", 15);
+    expect(startHostMetrics).toHaveBeenCalledWith({
+      apiKey: "test-key",
+      serviceName: "unknown-service",
+      interval: 30,
+      instanceId: "server-01",
+      hostname: "prod-api-1",
+    });
   });
 
   it("exports start and stop convenience functions", async () => {
@@ -80,4 +105,3 @@ describe("AceniteAgent", () => {
     expect(setupOtel).toHaveBeenCalledOnce();
   });
 });
-

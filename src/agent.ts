@@ -1,12 +1,14 @@
 import { trace, type Tracer } from "@opentelemetry/api";
 
 import { startHeartbeat } from "./heartbeat";
+import { startHostMetrics } from "./hostMetrics";
 import { setupOtel, shutdownOtel } from "./otel";
 import type { AceniteAgentConfig } from "./types";
 
 export class AceniteAgent {
   private static started = false;
   private static heartbeatTimer: NodeJS.Timeout | null = null;
+  private static hostMetricsTimer: NodeJS.Timeout | null = null;
   private static shutdownHooksRegistered = false;
 
   static start({
@@ -18,6 +20,10 @@ export class AceniteAgent {
     enableLogging = true,
     enableHeartbeat = true,
     heartbeatInterval = 60,
+    enableHostMetrics = true,
+    hostMetricsInterval = 60,
+    instanceId,
+    hostname,
   }: AceniteAgentConfig): void {
     if (AceniteAgent.started) {
       return;
@@ -37,6 +43,16 @@ export class AceniteAgent {
       AceniteAgent.heartbeatTimer = startHeartbeat(apiKey, heartbeatInterval);
     }
 
+    if (enableHostMetrics) {
+      AceniteAgent.hostMetricsTimer = startHostMetrics({
+        apiKey,
+        serviceName,
+        interval: hostMetricsInterval,
+        instanceId,
+        hostname,
+      });
+    }
+
     AceniteAgent.started = true;
     AceniteAgent.registerShutdownHooks();
   }
@@ -49,6 +65,10 @@ export class AceniteAgent {
     if (AceniteAgent.heartbeatTimer) {
       clearInterval(AceniteAgent.heartbeatTimer);
       AceniteAgent.heartbeatTimer = null;
+    }
+    if (AceniteAgent.hostMetricsTimer) {
+      clearInterval(AceniteAgent.hostMetricsTimer);
+      AceniteAgent.hostMetricsTimer = null;
     }
 
     await shutdownOtel();
@@ -70,4 +90,3 @@ export class AceniteAgent {
     AceniteAgent.shutdownHooksRegistered = true;
   }
 }
-

@@ -50,6 +50,10 @@ interface AceniteAgentConfig {
   enableLogging?: boolean;
   enableHeartbeat?: boolean;
   heartbeatInterval?: number;
+  enableHostMetrics?: boolean;
+  hostMetricsInterval?: number;
+  instanceId?: string;
+  hostname?: string;
 }
 ```
 
@@ -59,6 +63,10 @@ Defaults:
 - `enableLogging`: `true`
 - `enableHeartbeat`: `true`
 - `heartbeatInterval`: `60`
+- `enableHostMetrics`: `true`
+- `hostMetricsInterval`: `60`
+- `hostname`: operating system hostname
+- `instanceId`: `hostname`
 
 ## Behavior
 
@@ -66,5 +74,7 @@ Defaults:
 - Heartbeats are sent to `http://localhost:8000/server/heartbeat/`.
 - Requests use the `Authorization: Bearer <apiKey>` header.
 - Heartbeat payloads include `status`, `boot_id`, and `instance_id`, matching the Python agent.
+- Host resource metrics are sent to `http://localhost:8000/server/metrics/host`.
+- Host metric network fields, `network_rx_bytes` and `network_tx_bytes`, are cumulative counters. The Acenite backend calculates deltas/rates for charts.
 - `AceniteAgent.start(...)` is idempotent.
 - `AceniteAgent.stop()` clears the heartbeat interval and shuts down tracing.

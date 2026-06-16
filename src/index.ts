@@ -1,5 +1,6 @@
 export { AceniteAgent } from "./agent";
 export { sendHeartbeat } from "./heartbeat";
+export { buildHostMetricsPayload, collectHostMetrics, sendHostMetrics } from "./hostMetrics";
 export type {
   AceniteAgentConfig,
   AceniteFramework,
@@ -16,4 +17,3 @@ export function start(config: AceniteAgentConfig): void {
 export function stop(): Promise<void> {
   return AceniteAgent.stop();
 }
-

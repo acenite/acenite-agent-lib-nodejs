@@ -10,5 +10,8 @@ export interface AceniteAgentConfig {
   enableLogging?: boolean;
   enableHeartbeat?: boolean;
   heartbeatInterval?: number;
+  enableHostMetrics?: boolean;
+  hostMetricsInterval?: number;
+  instanceId?: string;
+  hostname?: string;
 }
-
