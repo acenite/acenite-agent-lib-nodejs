@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { ACENITE_URL } from "./constants";
+import { resolveAceniteUrl } from "./constants";
 
 export const BOOT_ID = randomUUID();
 
@@ -23,7 +23,7 @@ export async function sendHeartbeat({
     const timeout = setTimeout(() => controller.abort(), 8000);
 
     try {
-      await fetchImpl(`${ACENITE_URL}/heartbeat/`, {
+      await fetchImpl(`${resolveAceniteUrl()}/heartbeat/`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,

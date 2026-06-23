@@ -48,10 +48,12 @@ vi.mock("@opentelemetry/sdk-trace-node", () => ({
 }));
 
 import { setupOtel, shutdownOtel } from "../src/otel";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 
 describe("setupOtel", () => {
   afterEach(async () => {
     await shutdownOtel();
+    vi.unstubAllEnvs();
     vi.clearAllMocks();
   });
 
@@ -97,5 +99,17 @@ describe("setupOtel", () => {
     expect(mocks.addSpanProcessor).toHaveBeenCalledOnce();
     expect(mocks.register).toHaveBeenCalledOnce();
     expect(mocks.registerInstrumentations).toHaveBeenCalledOnce();
+  });
+
+  it("uses the local endpoint override for OTLP", () => {
+    vi.stubEnv("ACENITE_AGENT_ALLOW_ENDPOINT_OVERRIDE", "true");
+    vi.stubEnv("ACENITE_AGENT_INGEST_URL", "http://[::1]:5001");
+
+    setupOtel({ apiKey: "test-key", serviceName: "orders" });
+
+    expect(OTLPTraceExporter).toHaveBeenCalledWith({
+      url: "http://[::1]:5001/monitor/",
+      headers: { Authorization: "Bearer test-key" },
+    });
   });
 });

@@ -21,6 +21,7 @@ import { setupOtel } from "../src/otel";
 describe("AceniteAgent", () => {
   afterEach(async () => {
     await AceniteAgent.stop();
+    vi.unstubAllEnvs();
     vi.clearAllMocks();
   });
 
@@ -103,5 +104,17 @@ describe("AceniteAgent", () => {
     await stop();
 
     expect(setupOtel).toHaveBeenCalledOnce();
+  });
+
+  it("logs the local endpoint override once when logging is enabled", () => {
+    vi.stubEnv("ACENITE_AGENT_ALLOW_ENDPOINT_OVERRIDE", "TRUE");
+    vi.stubEnv("ACENITE_AGENT_INGEST_URL", "http://127.0.0.1:5001");
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+
+    AceniteAgent.start({ apiKey: "test-key" });
+    AceniteAgent.start({ apiKey: "test-key" });
+
+    expect(info).toHaveBeenCalledOnce();
+    expect(info).toHaveBeenCalledWith(expect.stringContaining("instead of production"));
   });
 });

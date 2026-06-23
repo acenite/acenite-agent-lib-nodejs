@@ -8,9 +8,9 @@ import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 
 import {
-  ACENITE_URL,
   ALLOWED_FRAMEWORKS,
   ALLOWED_INSTRUMENTATIONS,
+  resolveAceniteUrl,
 } from "./constants";
 import type { AceniteAgentConfig } from "./types";
 
@@ -53,7 +53,7 @@ export function setupOtel({
   });
 
   const exporter = new OTLPTraceExporter({
-    url: `${ACENITE_URL}/monitor/`,
+    url: `${resolveAceniteUrl()}/monitor/`,
     headers: {
       Authorization: `Bearer ${apiKey}`,
     },

@@ -20,6 +20,7 @@ const metrics: HostMetricsValues = {
 describe("host metrics", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
     vi.useRealTimers();
   });
 
@@ -81,5 +82,25 @@ describe("host metrics", () => {
     await vi.runAllTimersAsync();
     await expect(promise).resolves.toBeUndefined();
     expect(consoleError).toHaveBeenCalledOnce();
+  });
+
+  it("uses the local endpoint override", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    vi.stubEnv("ACENITE_AGENT_ALLOW_ENDPOINT_OVERRIDE", "true");
+    vi.stubEnv("ACENITE_AGENT_INGEST_URL", "http://localhost:5001");
+    const fetchImpl = vi.fn().mockResolvedValue(new Response(null));
+
+    const promise = sendHostMetrics({
+      apiKey: "test-key",
+      serviceName: "billing-api",
+      interval: 60,
+      fetchImpl,
+      collectMetrics: vi.fn().mockResolvedValue(metrics),
+    });
+    await vi.runAllTimersAsync();
+    await promise;
+
+    expect(fetchImpl.mock.calls[0][0]).toBe("http://localhost:5001/metrics/host");
   });
 });

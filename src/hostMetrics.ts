@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { ACENITE_URL } from "./constants";
+import { resolveAceniteUrl } from "./constants";
 
 export const HOST_METRICS_BOOT_ID = randomUUID();
 
@@ -63,7 +63,7 @@ export async function sendHostMetrics({
     const timeout = setTimeout(() => controller.abort(), 8000);
 
     try {
-      await fetchImpl(`${ACENITE_URL}/metrics/host`, {
+      await fetchImpl(`${resolveAceniteUrl()}/metrics/host`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,

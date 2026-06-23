@@ -1,5 +1,6 @@
 import { trace, type Tracer } from "@opentelemetry/api";
 
+import { ACENITE_URL, resolveAceniteUrl } from "./constants";
 import { startHeartbeat } from "./heartbeat";
 import { startHostMetrics } from "./hostMetrics";
 import { setupOtel, shutdownOtel } from "./otel";
@@ -27,6 +28,13 @@ export class AceniteAgent {
   }: AceniteAgentConfig): void {
     if (AceniteAgent.started) {
       return;
+    }
+
+    const resolvedAceniteUrl = resolveAceniteUrl();
+    if (enableLogging && resolvedAceniteUrl !== ACENITE_URL) {
+      console.info(
+        `Acenite development endpoint override active: telemetry is being sent to ${resolvedAceniteUrl} instead of production.`,
+      );
     }
 
     if (enableLogging) {
