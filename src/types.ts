@@ -1,4 +1,4 @@
-export type AceniteFramework = "express";
+export type AceniteFramework = "express" | "http";
 export type AceniteInstrumentation = "http";
 
 export interface AceniteAgentConfig {
@@ -8,6 +8,7 @@ export interface AceniteAgentConfig {
   apiKey: string;
   serviceName?: string;
   enableLogging?: boolean;
+  enableApplicationMonitoring?: boolean;
   enableHeartbeat?: boolean;
   heartbeatInterval?: number;
   enableHostMetrics?: boolean;

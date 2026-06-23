@@ -45,6 +45,5 @@ export function resolveAceniteUrl(environment: NodeJS.ProcessEnv = process.env):
   return ACENITE_URL;
 }
 
-export const ALLOWED_FRAMEWORKS = new Set(["express"]);
+export const ALLOWED_FRAMEWORKS = new Set(["express", "http"]);
 export const ALLOWED_INSTRUMENTATIONS = new Set(["http"]);
-

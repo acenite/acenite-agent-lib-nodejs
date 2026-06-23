@@ -9,14 +9,16 @@ export interface HeartbeatOptions {
   apiKey: string;
   interval: number;
   fetchImpl?: typeof fetch;
+  jitter?: boolean;
 }
 
 export async function sendHeartbeat({
   apiKey,
   interval,
   fetchImpl = fetch,
+  jitter = true,
 }: HeartbeatOptions): Promise<void> {
-  await sleep(Math.random() * (interval * 100));
+  if (jitter) await sleep(Math.random() * (interval * 100));
 
   try {
     const controller = new AbortController();
@@ -45,6 +47,7 @@ export async function sendHeartbeat({
 }
 
 export function startHeartbeat(apiKey: string, interval: number): NodeJS.Timeout {
+  void sendHeartbeat({ apiKey, interval, jitter: false });
   const intervalMs = interval * 1000;
   const timer = setInterval(() => {
     void sendHeartbeat({ apiKey, interval });
@@ -53,4 +56,3 @@ export function startHeartbeat(apiKey: string, interval: number): NodeJS.Timeout
   timer.unref?.();
   return timer;
 }
-

@@ -12,20 +12,21 @@ npm install acenite-agent-lib-nodejs
 
 ## Usage
 
+Create `instrumentation.ts` and load it before importing Express or `node:http`:
+
 ```ts
-import express from "express";
 import { AceniteAgent } from "acenite-agent-lib-nodejs";
-
-const app = express();
-
 AceniteAgent.start({
-  app,
   framework: "express",
-  apiKey: "your-api-key",
+  apiKey: process.env.ACENITE_API_KEY!,
   serviceName: "orders-service",
-  instrumentations: ["http"],
+  enableApplicationMonitoring: true,
+  enableHeartbeat: true,
+  enableHostMetrics: true,
 });
 ```
+
+Import `./instrumentation.js` first in the server entrypoint. Use `framework: "http"` for built-in Node.js HTTP.
 
 The existing function-style entrypoint is also available:
 
@@ -44,10 +45,11 @@ start({
 interface AceniteAgentConfig {
   apiKey: string;
   app?: object | null;
-  framework?: "express";
+  framework?: "express" | "http";
   instrumentations?: "http"[];
   serviceName?: string;
   enableLogging?: boolean;
+  enableApplicationMonitoring?: boolean;
   enableHeartbeat?: boolean;
   heartbeatInterval?: number;
   enableHostMetrics?: boolean;
@@ -77,4 +79,5 @@ Defaults:
 - Host resource metrics are sent to `https://ingest.acenite.com/metrics/host` by default.
 - Host metric network fields, `network_rx_bytes` and `network_tx_bytes`, are cumulative counters. The Acenite backend calculates deltas/rates for charts.
 - `AceniteAgent.start(...)` is idempotent.
-- `AceniteAgent.stop()` clears the heartbeat interval and shuts down tracing.
+- `AceniteAgent.stop()` clears both background intervals and shuts down tracing.
+- `AceniteAgent.getTracer()` and the exported `getTracer()` provide manual spans.

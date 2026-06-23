@@ -19,6 +19,7 @@ export class AceniteAgent {
     apiKey,
     serviceName = "unknown-service",
     enableLogging = true,
+    enableApplicationMonitoring,
     enableHeartbeat = true,
     heartbeatInterval = 60,
     enableHostMetrics = true,
@@ -30,6 +31,18 @@ export class AceniteAgent {
       return;
     }
 
+    if (!apiKey?.trim()) throw new Error("apiKey is required");
+    if (!serviceName.trim()) throw new Error("serviceName must not be blank");
+    AceniteAgent.validateInterval("heartbeatInterval", heartbeatInterval);
+    AceniteAgent.validateInterval("hostMetricsInterval", hostMetricsInterval);
+    if (framework && framework !== "express" && framework !== "http") {
+      throw new Error(`Unsupported framework: ${framework}`);
+    }
+
+    // enableLogging historically controlled OpenTelemetry. Keep that behavior
+    // unless the canonical application-monitoring flag is explicitly supplied.
+    const applicationMonitoring = enableApplicationMonitoring ?? enableLogging;
+
     const resolvedAceniteUrl = resolveAceniteUrl();
     if (enableLogging && resolvedAceniteUrl !== ACENITE_URL) {
       console.info(
@@ -37,7 +50,7 @@ export class AceniteAgent {
       );
     }
 
-    if (enableLogging) {
+    if (applicationMonitoring) {
       setupOtel({
         app,
         framework,
@@ -96,5 +109,11 @@ export class AceniteAgent {
     process.once("SIGINT", shutdown);
     process.once("SIGTERM", shutdown);
     AceniteAgent.shutdownHooksRegistered = true;
+  }
+
+  private static validateInterval(name: string, value: number): void {
+    if (!Number.isFinite(value) || value < 15 || value > 300) {
+      throw new Error(`${name} must be between 15 and 300 seconds`);
+    }
   }
 }

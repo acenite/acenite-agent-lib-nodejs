@@ -17,3 +17,7 @@ export function start(config: AceniteAgentConfig): void {
 export function stop(): Promise<void> {
   return AceniteAgent.stop();
 }
+
+export function getTracer() {
+  return AceniteAgent.getTracer();
+}

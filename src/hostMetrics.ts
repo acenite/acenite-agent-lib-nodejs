@@ -17,6 +17,7 @@ export interface HostMetricsOptions {
   hostname?: string;
   fetchImpl?: typeof fetch;
   collectMetrics?: typeof collectHostMetrics;
+  jitter?: boolean;
 }
 
 export interface HostMetricsPayload {
@@ -49,8 +50,9 @@ export async function sendHostMetrics({
   hostname,
   fetchImpl = fetch,
   collectMetrics = collectHostMetrics,
+  jitter = true,
 }: HostMetricsOptions): Promise<void> {
-  await sleep(Math.random() * (interval * 100));
+  if (jitter) await sleep(Math.random() * (interval * 100));
 
   try {
     const payload = await buildHostMetricsPayload({
@@ -87,6 +89,14 @@ export function startHostMetrics({
   instanceId,
   hostname,
 }: Omit<HostMetricsOptions, "fetchImpl" | "collectMetrics">): NodeJS.Timeout {
+  void sendHostMetrics({
+    apiKey,
+    serviceName,
+    interval,
+    instanceId,
+    hostname,
+    jitter: false,
+  });
   const intervalMs = interval * 1000;
   const timer = setInterval(() => {
     void sendHostMetrics({

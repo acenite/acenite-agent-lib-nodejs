@@ -73,6 +73,23 @@ describe("AceniteAgent", () => {
     expect(startHostMetrics).not.toHaveBeenCalled();
   });
 
+  it("canonical application monitoring can be disabled independently of logging", () => {
+    AceniteAgent.start({
+      apiKey: "test-key",
+      framework: "http",
+      enableLogging: true,
+      enableApplicationMonitoring: false,
+      enableHeartbeat: false,
+      enableHostMetrics: false,
+    });
+    expect(setupOtel).not.toHaveBeenCalled();
+  });
+
+  it("validates canonical framework and interval ranges", () => {
+    expect(() => AceniteAgent.start({ apiKey: "test-key", framework: "fastify" as never })).toThrow("Unsupported framework");
+    expect(() => AceniteAgent.start({ apiKey: "test-key", heartbeatInterval: 14 })).toThrow("between 15 and 300");
+  });
+
   it("uses the Python-compatible default service name and custom intervals", () => {
     AceniteAgent.start({
       apiKey: "test-key",

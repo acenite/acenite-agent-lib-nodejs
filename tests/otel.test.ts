@@ -67,15 +67,13 @@ describe("setupOtel", () => {
     ).toThrow("Unsupported framework: fastify");
   });
 
-  it("requires an app instance for express", () => {
-    expect(() =>
-      setupOtel({
-        apiKey: "test-key",
-        serviceName: "orders",
-        framework: "express",
-        app: null,
-      }),
-    ).toThrow("express framework requires app instance");
+  it("allows express instrumentation to bootstrap before express is imported", () => {
+    expect(() => setupOtel({
+      apiKey: "test-key",
+      serviceName: "orders",
+      framework: "express",
+      app: null,
+    })).not.toThrow();
   });
 
   it("rejects unsupported instrumentations", () => {
@@ -98,6 +96,11 @@ describe("setupOtel", () => {
 
     expect(mocks.addSpanProcessor).toHaveBeenCalledOnce();
     expect(mocks.register).toHaveBeenCalledOnce();
+    expect(mocks.registerInstrumentations).toHaveBeenCalledOnce();
+  });
+
+  it("registers built-in HTTP instrumentation from the canonical framework", () => {
+    setupOtel({ apiKey: "test-key", serviceName: "orders", framework: "http" });
     expect(mocks.registerInstrumentations).toHaveBeenCalledOnce();
   });
 

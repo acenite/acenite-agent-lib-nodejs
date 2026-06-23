@@ -15,9 +15,9 @@ import {
 import type { AceniteAgentConfig } from "./types";
 
 let provider: NodeTracerProvider | null = null;
+let activeInstrumentations: Array<HttpInstrumentation | ExpressInstrumentation> = [];
 
 export function setupOtel({
-  app,
   framework,
   instrumentations,
   apiKey,
@@ -35,9 +35,6 @@ export function setupOtel({
       throw new Error(`Unsupported framework: ${framework}`);
     }
 
-    if (framework === "express" && app == null) {
-      throw new Error("express framework requires app instance");
-    }
   }
 
   if (instrumentations) {
@@ -62,9 +59,9 @@ export function setupOtel({
   provider.addSpanProcessor(new BatchSpanProcessor(exporter));
   provider.register();
 
-  const otelInstrumentations = [];
+  const otelInstrumentations: Array<HttpInstrumentation | ExpressInstrumentation> = [];
   const includeHttp =
-    framework === "express" || instrumentations?.includes("http") === true;
+    framework === "express" || framework === "http" || instrumentations?.includes("http") === true;
 
   if (includeHttp) {
     otelInstrumentations.push(new HttpInstrumentation());
@@ -79,6 +76,7 @@ export function setupOtel({
       tracerProvider: provider,
       instrumentations: otelInstrumentations,
     });
+    activeInstrumentations = otelInstrumentations;
   }
 
   diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR);
@@ -91,10 +89,13 @@ export async function shutdownOtel(): Promise<void> {
 
   const activeProvider = provider;
   provider = null;
+  for (const instrumentation of activeInstrumentations) {
+    instrumentation.disable?.();
+  }
+  activeInstrumentations = [];
   await activeProvider.shutdown();
 }
 
 export function isOtelStarted(): boolean {
   return provider !== null;
 }
-
