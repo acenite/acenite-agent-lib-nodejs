@@ -3,6 +3,23 @@ import { isIP } from "node:net";
 export const ACENITE_URL = "https://ingest.acenite.com";
 export const ALLOW_ENDPOINT_OVERRIDE_ENV = "ACENITE_AGENT_ALLOW_ENDPOINT_OVERRIDE";
 export const INGEST_URL_ENV = "ACENITE_AGENT_INGEST_URL";
+export const ACENITE_ENVIRONMENT_ENV = "ACENITE_ENVIRONMENT";
+export const ACENITE_ENVIRONMENT_DOCS_URL = "https://acenite.com/docs/environments";
+
+export function resolveAceniteEnvironment(
+  environment: NodeJS.ProcessEnv = process.env,
+): { value: "production" | "development"; defaulted: boolean } {
+  if (!(ACENITE_ENVIRONMENT_ENV in environment)) {
+    return { value: "production", defaulted: true };
+  }
+  const value = environment[ACENITE_ENVIRONMENT_ENV];
+  if (value !== "production" && value !== "development") {
+    throw new Error(
+      `ACENITE_ENVIRONMENT must be exactly 'production' or 'development'; see ${ACENITE_ENVIRONMENT_DOCS_URL}`,
+    );
+  }
+  return { value, defaulted: false };
+}
 
 export function resolveAceniteUrl(environment: NodeJS.ProcessEnv = process.env): string {
   if (environment[ALLOW_ENDPOINT_OVERRIDE_ENV]?.toLowerCase() !== "true") {

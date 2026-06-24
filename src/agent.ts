@@ -1,6 +1,6 @@
 import { trace, type Tracer } from "@opentelemetry/api";
 
-import { ACENITE_URL, resolveAceniteUrl } from "./constants";
+import { ACENITE_ENVIRONMENT_DOCS_URL, ACENITE_URL, resolveAceniteEnvironment, resolveAceniteUrl } from "./constants";
 import { startHeartbeat } from "./heartbeat";
 import { startHostMetrics } from "./hostMetrics";
 import { setupOtel, shutdownOtel } from "./otel";
@@ -31,6 +31,11 @@ export class AceniteAgent {
       return;
     }
 
+    const aceniteEnvironment = resolveAceniteEnvironment();
+    if (aceniteEnvironment.defaulted) {
+      console.warn(`WARNING: ACENITE_ENVIRONMENT is not set; defaulting to production. See ${ACENITE_ENVIRONMENT_DOCS_URL}`);
+    }
+
     if (!apiKey?.trim()) throw new Error("apiKey is required");
     if (!serviceName.trim()) throw new Error("serviceName must not be blank");
     AceniteAgent.validateInterval("heartbeatInterval", heartbeatInterval);
@@ -57,20 +62,22 @@ export class AceniteAgent {
         instrumentations,
         apiKey,
         serviceName,
+        aceniteEnvironment: aceniteEnvironment.value,
       });
     }
 
-    if (enableHeartbeat) {
-      AceniteAgent.heartbeatTimer = startHeartbeat(apiKey, heartbeatInterval);
+    if (enableHeartbeat && aceniteEnvironment.value === "production") {
+      AceniteAgent.heartbeatTimer = startHeartbeat(apiKey, heartbeatInterval, aceniteEnvironment.value);
     }
 
-    if (enableHostMetrics) {
+    if (enableHostMetrics && aceniteEnvironment.value === "production") {
       AceniteAgent.hostMetricsTimer = startHostMetrics({
         apiKey,
         serviceName,
         interval: hostMetricsInterval,
         instanceId,
         hostname,
+        aceniteEnvironment: aceniteEnvironment.value,
       });
     }
 

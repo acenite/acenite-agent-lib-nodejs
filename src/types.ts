@@ -1,5 +1,6 @@
 export type AceniteFramework = "express" | "http";
 export type AceniteInstrumentation = "http";
+export type AceniteEnvironment = "production" | "development";
 
 export interface AceniteAgentConfig {
   app?: object | null;

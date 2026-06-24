@@ -18,6 +18,7 @@ export interface HostMetricsOptions {
   fetchImpl?: typeof fetch;
   collectMetrics?: typeof collectHostMetrics;
   jitter?: boolean;
+  aceniteEnvironment?: "production" | "development";
 }
 
 export interface HostMetricsPayload {
@@ -51,6 +52,7 @@ export async function sendHostMetrics({
   fetchImpl = fetch,
   collectMetrics = collectHostMetrics,
   jitter = true,
+  aceniteEnvironment = "production",
 }: HostMetricsOptions): Promise<void> {
   if (jitter) await sleep(Math.random() * (interval * 100));
 
@@ -70,6 +72,7 @@ export async function sendHostMetrics({
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
+          "X-Acenite-Environment": aceniteEnvironment,
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -88,6 +91,7 @@ export function startHostMetrics({
   interval,
   instanceId,
   hostname,
+  aceniteEnvironment = "production",
 }: Omit<HostMetricsOptions, "fetchImpl" | "collectMetrics">): NodeJS.Timeout {
   void sendHostMetrics({
     apiKey,
@@ -96,6 +100,7 @@ export function startHostMetrics({
     instanceId,
     hostname,
     jitter: false,
+    aceniteEnvironment,
   });
   const intervalMs = interval * 1000;
   const timer = setInterval(() => {
@@ -105,6 +110,7 @@ export function startHostMetrics({
       interval,
       instanceId,
       hostname,
+      aceniteEnvironment,
     });
   }, intervalMs);
 

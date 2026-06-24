@@ -22,10 +22,13 @@ export function setupOtel({
   instrumentations,
   apiKey,
   serviceName,
+  aceniteEnvironment = "production",
 }: Required<
   Pick<AceniteAgentConfig, "apiKey" | "serviceName">
 > &
-  Pick<AceniteAgentConfig, "app" | "framework" | "instrumentations">): void {
+  Pick<AceniteAgentConfig, "app" | "framework" | "instrumentations"> & {
+    aceniteEnvironment?: "production" | "development";
+  }): void {
   if (provider) {
     return;
   }
@@ -46,13 +49,17 @@ export function setupOtel({
   }
 
   provider = new NodeTracerProvider({
-    resource: new Resource({ "service.name": serviceName }),
+    resource: new Resource({
+      "service.name": serviceName,
+      "deployment.environment.name": aceniteEnvironment,
+    }),
   });
 
   const exporter = new OTLPTraceExporter({
     url: `${resolveAceniteUrl()}/monitor/`,
     headers: {
       Authorization: `Bearer ${apiKey}`,
+      "X-Acenite-Environment": aceniteEnvironment,
     },
   });
 

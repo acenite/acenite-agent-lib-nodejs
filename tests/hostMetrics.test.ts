@@ -60,6 +60,7 @@ describe("host metrics", () => {
       headers: {
         Authorization: "Bearer test-key",
         "Content-Type": "application/json",
+        "X-Acenite-Environment": "production",
       },
       body: expect.stringContaining("\"network_rx_bytes\":400"),
       signal: expect.any(AbortSignal),

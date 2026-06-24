@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../src/heartbeat", () => ({
   startHeartbeat: vi.fn(() => ({ unref: vi.fn() })),
@@ -19,6 +19,7 @@ import { startHostMetrics } from "../src/hostMetrics";
 import { setupOtel } from "../src/otel";
 
 describe("AceniteAgent", () => {
+  beforeEach(() => vi.stubEnv("ACENITE_ENVIRONMENT", "production"));
   afterEach(async () => {
     await AceniteAgent.stop();
     vi.unstubAllEnvs();
@@ -47,9 +48,10 @@ describe("AceniteAgent", () => {
       instrumentations: ["http"],
       apiKey: "test-key",
       serviceName: "orders",
+      aceniteEnvironment: "production",
     });
     expect(startHeartbeat).toHaveBeenCalledOnce();
-    expect(startHeartbeat).toHaveBeenCalledWith("test-key", 60);
+    expect(startHeartbeat).toHaveBeenCalledWith("test-key", 60, "production");
     expect(startHostMetrics).toHaveBeenCalledOnce();
     expect(startHostMetrics).toHaveBeenCalledWith({
       apiKey: "test-key",
@@ -57,6 +59,7 @@ describe("AceniteAgent", () => {
       interval: 60,
       instanceId: undefined,
       hostname: undefined,
+      aceniteEnvironment: "production",
     });
   });
 
@@ -105,14 +108,16 @@ describe("AceniteAgent", () => {
       instrumentations: undefined,
       apiKey: "test-key",
       serviceName: "unknown-service",
+      aceniteEnvironment: "production",
     });
-    expect(startHeartbeat).toHaveBeenCalledWith("test-key", 15);
+    expect(startHeartbeat).toHaveBeenCalledWith("test-key", 15, "production");
     expect(startHostMetrics).toHaveBeenCalledWith({
       apiKey: "test-key",
       serviceName: "unknown-service",
       interval: 30,
       instanceId: "server-01",
       hostname: "prod-api-1",
+      aceniteEnvironment: "production",
     });
   });
 
@@ -133,5 +138,30 @@ describe("AceniteAgent", () => {
 
     expect(info).toHaveBeenCalledOnce();
     expect(info).toHaveBeenCalledWith(expect.stringContaining("instead of production"));
+  });
+
+  it("runs only instrumentation in development", () => {
+    vi.stubEnv("ACENITE_ENVIRONMENT", "development");
+    AceniteAgent.start({ apiKey: "test-key" });
+    expect(setupOtel).toHaveBeenCalledWith(expect.objectContaining({ aceniteEnvironment: "development" }));
+    expect(startHeartbeat).not.toHaveBeenCalled();
+    expect(startHostMetrics).not.toHaveBeenCalled();
+  });
+
+  it("defaults missing environment to production with one documented warning", () => {
+    vi.unstubAllEnvs();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    AceniteAgent.start({ apiKey: "test-key", enableHeartbeat: false, enableHostMetrics: false });
+    AceniteAgent.start({ apiKey: "test-key" });
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn.mock.calls[0][0]).toContain("https://acenite.com/docs/environments");
+  });
+
+  it("rejects empty and invalid environments before startup", () => {
+    for (const value of ["", "Production", " development ", "staging"]) {
+      vi.stubEnv("ACENITE_ENVIRONMENT", value);
+      expect(() => AceniteAgent.start({ apiKey: "test-key" })).toThrow("ACENITE_ENVIRONMENT");
+    }
+    expect(setupOtel).not.toHaveBeenCalled();
   });
 });

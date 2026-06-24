@@ -112,7 +112,10 @@ describe("setupOtel", () => {
 
     expect(OTLPTraceExporter).toHaveBeenCalledWith({
       url: "http://[::1]:5001/monitor/",
-      headers: { Authorization: "Bearer test-key" },
+      headers: {
+        Authorization: "Bearer test-key",
+        "X-Acenite-Environment": "production",
+      },
     });
   });
 });

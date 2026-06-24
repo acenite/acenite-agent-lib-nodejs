@@ -10,6 +10,7 @@ export interface HeartbeatOptions {
   interval: number;
   fetchImpl?: typeof fetch;
   jitter?: boolean;
+  aceniteEnvironment?: "production" | "development";
 }
 
 export async function sendHeartbeat({
@@ -17,6 +18,7 @@ export async function sendHeartbeat({
   interval,
   fetchImpl = fetch,
   jitter = true,
+  aceniteEnvironment = "production",
 }: HeartbeatOptions): Promise<void> {
   if (jitter) await sleep(Math.random() * (interval * 100));
 
@@ -30,6 +32,7 @@ export async function sendHeartbeat({
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
+          "X-Acenite-Environment": aceniteEnvironment,
         },
         body: JSON.stringify({
           status: "up",
@@ -46,11 +49,15 @@ export async function sendHeartbeat({
   }
 }
 
-export function startHeartbeat(apiKey: string, interval: number): NodeJS.Timeout {
-  void sendHeartbeat({ apiKey, interval, jitter: false });
+export function startHeartbeat(
+  apiKey: string,
+  interval: number,
+  aceniteEnvironment: "production" | "development" = "production",
+): NodeJS.Timeout {
+  void sendHeartbeat({ apiKey, interval, jitter: false, aceniteEnvironment });
   const intervalMs = interval * 1000;
   const timer = setInterval(() => {
-    void sendHeartbeat({ apiKey, interval });
+    void sendHeartbeat({ apiKey, interval, aceniteEnvironment });
   }, intervalMs);
 
   timer.unref?.();

@@ -29,6 +29,7 @@ describe("sendHeartbeat", () => {
       headers: {
         Authorization: "Bearer test-key",
         "Content-Type": "application/json",
+        "X-Acenite-Environment": "production",
       },
       body: JSON.stringify({
         status: "up",
@@ -69,4 +70,3 @@ describe("sendHeartbeat", () => {
     expect(fetchImpl.mock.calls[0][0]).toBe("http://127.0.0.1:5001/heartbeat/");
   });
 });
-

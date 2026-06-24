@@ -81,3 +81,8 @@ Defaults:
 - `AceniteAgent.start(...)` is idempotent.
 - `AceniteAgent.stop()` clears both background intervals and shuts down tracing.
 - `AceniteAgent.getTracer()` and the exported `getTracer()` provide manual spans.
+
+Set `ACENITE_ENVIRONMENT=production` or `ACENITE_ENVIRONMENT=development`.
+Development starts application instrumentation only and does not send heartbeats
+or host metrics. If unset, the agent warns once and defaults to production. See
+https://acenite.com/docs/environments.
